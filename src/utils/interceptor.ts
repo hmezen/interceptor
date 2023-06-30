@@ -1,8 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
-const batchInterval = 2000; // two seconds
 let batchedRequests: InternalAxiosRequestConfig[] = [];
-let batchedRequestPromise: Promise<any> | null = null;
+let batchedRequestTimeout: NodeJS.Timeout | null = null;
 
 const getBatchedRequestsConfig = (
   config: InternalAxiosRequestConfig
@@ -35,19 +34,15 @@ const sendBatchRequest = () => {
     })
     .finally(() => {
       batchedRequests = [];
-      batchedRequestPromise = null;
+      batchedRequestTimeout = null;
     });
 };
 
 const batchRequest = (config: InternalAxiosRequestConfig): void => {
   batchedRequests.push(config);
 
-  if (batchedRequestPromise === null) {
-    batchedRequestPromise = new Promise(() => {
-      setTimeout(() => {
-        sendBatchRequest();
-      }, batchInterval);
-    });
+  if (batchedRequestTimeout === null) {
+    batchedRequestTimeout = setTimeout(sendBatchRequest, 2000);
   }
 };
 
